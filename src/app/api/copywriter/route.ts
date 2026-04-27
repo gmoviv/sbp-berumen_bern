@@ -7,6 +7,7 @@ import path from "path";
 import { getPersona } from "@/lib/personaProvider";
 import { randomUUID } from "crypto";
 import { db } from "@/lib/clients";
+import { requireAuth } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -300,6 +301,9 @@ Return only JSON.`;
 }
 
 export async function GET() {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   const platforms = await loadPlatforms();
   const companyGuidelines = await loadCompanyGuidelines();
 
@@ -307,6 +311,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(

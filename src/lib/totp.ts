@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-// @ts-ignore
+// @ts-expect-error — thirty-two has no published types
 import base32 from 'thirty-two';
 
 const TOTP_PERIOD = 30; // seconds

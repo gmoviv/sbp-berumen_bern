@@ -10,6 +10,7 @@ import {
   buildRefinementRewriteSystemPrompt,
   buildRefinementRewriteUserPrompt,
 } from "./prompt";
+import { requireAuth } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -57,6 +58,9 @@ const RewriteRepairSchema = z.object({
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 export async function POST(req: Request) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(

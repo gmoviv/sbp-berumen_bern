@@ -11,9 +11,9 @@ interface ScoringBreakdownProps {
     pitchClarity: number;
   };
   rationale?: {
-    value: string;
-    feasibility: string;
-    lens: string;
+    problemValidity: string;
+    solutionLogic: string;
+    pitchClarity: string;
   };
 }
 
@@ -36,7 +36,7 @@ export function ScoringBreakdown({ confidenceScore, breakdown, rationale }: Scor
       weight: '50%',
       score: breakdown.problemValidity,
       icon: ShieldCheck,
-      desc: rationale?.value || 'Evaluación del dolor y urgencia para la persona.',
+      desc: rationale?.problemValidity || 'Evaluación del dolor y urgencia para la persona.',
       color: 'indigo'
     },
     {
@@ -44,7 +44,7 @@ export function ScoringBreakdown({ confidenceScore, breakdown, rationale }: Scor
       weight: '30%',
       score: breakdown.solutionLogic,
       icon: Zap,
-      desc: rationale?.feasibility || 'Evaluación de factibilidad y recursos.',
+      desc: rationale?.solutionLogic || 'Evaluación de factibilidad y recursos.',
       color: 'blue'
     },
     {
@@ -52,7 +52,7 @@ export function ScoringBreakdown({ confidenceScore, breakdown, rationale }: Scor
       weight: '20%',
       score: breakdown.pitchClarity,
       icon: Eye,
-      desc: rationale?.lens || 'Evaluación bajo el lente específico solicitado.',
+      desc: rationale?.pitchClarity || 'Evaluación bajo el lente específico solicitado.',
       color: 'purple'
     }
   ];

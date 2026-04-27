@@ -13,7 +13,9 @@
     "db:auth:setup": "dotenv -e .env.local -- tsx scripts/db/auth-schema.ts",
     "db:locale:migrate": "dotenv -e .env.local -- tsx scripts/db/locale-migration.ts",
     "db:migrate:personas": "dotenv -e .env.local -- tsx scripts/db/migrate-personas.ts",
-    "embed": "dotenv -e .env.local -- tsx scripts/db/embed.ts"
+    "db:usage-logs:setup": "dotenv -e .env.local -- tsx scripts/db/usage-logs.ts",
+    "embed": "dotenv -e .env.local -- tsx scripts/db/embed.ts",
+    "eval:scoring": "dotenv -e .env.local -- tsx scripts/eval/scoring.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.74",

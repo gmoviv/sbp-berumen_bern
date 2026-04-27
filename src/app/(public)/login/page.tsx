@@ -2,7 +2,7 @@
 
 import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 function LoginPageContent() {
@@ -13,15 +13,12 @@ function LoginPageContent() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setError(errorParam ? t("auth.login.error_invalid_credentials") : null);
-  }, [errorParam, t]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const error = submitError ?? (errorParam ? t("auth.login.error_invalid_credentials") : null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setSubmitError(null);
 
     const result = await signIn("credentials", {
       email,
@@ -38,7 +35,7 @@ function LoginPageContent() {
       if (isTwoFactorRequired) {
         router.push(`/login/2fa?email=${encodeURIComponent(email)}`);
       } else {
-        setError(t("auth.login.error_try_again"));
+        setSubmitError(t("auth.login.error_try_again"));
       }
     } else {
       const session = await getSession();

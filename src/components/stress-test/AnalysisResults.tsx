@@ -59,10 +59,10 @@ export function AnalysisResults({
 
             {result.confidenceBreakdown && (
               <div className="animate-slide-in-up">
-                <ScoringBreakdown 
+                <ScoringBreakdown
                   confidenceScore={result.confidenceScore || 0}
-                  breakdown={result.confidenceBreakdown as any}
-                  rationale={result.scoringRationale as any}
+                  breakdown={result.confidenceBreakdown}
+                  rationale={result.scoringRationale}
                 />
               </div>
             )}

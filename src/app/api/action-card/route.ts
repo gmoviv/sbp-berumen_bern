@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
 import { ACTION_CARD_SYSTEM, buildActionCardUserPrompt } from "@/prompts/action-card";
+import { requireAuth } from "@/lib/api-auth";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -45,6 +46,9 @@ async function call(system: string, user: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   try {
     const body = Req.parse(await req.json());
     const userPrompt = buildActionCardUserPrompt(body);

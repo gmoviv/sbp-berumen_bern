@@ -17,9 +17,9 @@ export const SimulationResultSchema = z.object({
     pitchClarity: z.number().min(0).max(100),
   }).optional(),
   scoringRationale: z.object({
-    value: z.string(),
-    feasibility: z.string(),
-    lens: z.string(),
+    problemValidity: z.string(),
+    solutionLogic: z.string(),
+    pitchClarity: z.string(),
   }).optional(),
   debugRationale: z.string().optional(),
 });

@@ -6,9 +6,19 @@ import PostgresAdapter from "@auth/pg-adapter";
 import Credentials from "next-auth/providers/credentials";
 import { db } from "./clients";
 import { normalizeLocale } from "./i18n/config";
+import {
+  completeChallenge,
+  issueChallenge,
+  validateChallenge,
+} from "./twofa-challenge";
 
 class TwoFactorRequiredError extends CredentialsSignin {
   code = "2fa_required";
+}
+
+class TwoFactorStateError extends CredentialsSignin {
+  // Surfaces inconsistent 2FA state (C6) so an admin can re-enroll the user.
+  code = "2fa_state_invalid";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -64,39 +74,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         const { email, password, twoFaCode, is2fa } = credentials;
 
-        if (typeof email !== 'string') return null;
-        
-        const userResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
-        const user = userResult.rows[0];
-
-        if (!user) return null;
-
+        // ---- Step 2: TOTP verification ----
+        // The client claims `is2fa: true` but we never trust that flag alone (C1).
+        // The server-issued challenge cookie binds this step to a successful
+        // step-1 password check.
         if (is2fa) {
-          if (!user.two_factor_secret || typeof twoFaCode !== 'string') return null;
-          const isValid = verifyOtp(twoFaCode, user.two_factor_secret);
-          if (isValid) return { id: user.id, name: user.name, email: user.email };
-          return null;
-        }
+          if (typeof twoFaCode !== "string") return null;
 
-        if (typeof password !== 'string' || !user.password) return null;
-        const passwordsMatch = await bcrypt.compare(password, user.password);
+          const userId = await validateChallenge();
+          if (!userId) return null;
 
-        if (passwordsMatch) {
-          if (user.two_factor_enabled) {
-            if (!user.two_factor_secret) {
-              // Recover from inconsistent DB state so the user can re-enroll 2FA.
-              await db.query(
-                "UPDATE users SET two_factor_enabled = FALSE WHERE id = $1",
-                [user.id]
-              );
-              return { id: user.id, name: user.name, email: user.email };
-            }
-            throw new TwoFactorRequiredError();
-          }
+          const userResult = await db.query(
+            "SELECT id, name, email, two_factor_secret, two_factor_enabled FROM users WHERE id = $1",
+            [userId]
+          );
+          const user = userResult.rows[0];
+          if (!user || !user.two_factor_secret) return null;
+
+          if (!verifyOtp(twoFaCode, user.two_factor_secret)) return null;
+
+          await completeChallenge();
           return { id: user.id, name: user.name, email: user.email };
         }
 
-        return null;
+        // ---- Step 1: email + password ----
+        if (typeof email !== "string") return null;
+        if (typeof password !== "string") return null;
+
+        const userResult = await db.query(
+          "SELECT * FROM users WHERE email = $1",
+          [email]
+        );
+        const user = userResult.rows[0];
+        if (!user || !user.password) return null;
+
+        const passwordsMatch = await bcrypt.compare(password, user.password);
+        if (!passwordsMatch) return null;
+
+        if (user.two_factor_enabled) {
+          if (!user.two_factor_secret) {
+            // C6: do NOT silently downgrade. Refuse login and force admin re-enrollment.
+            console.error(
+              `[auth] inconsistent 2FA state for user ${user.id}: enabled=true, secret=NULL`
+            );
+            throw new TwoFactorStateError();
+          }
+          await issueChallenge(user.id);
+          throw new TwoFactorRequiredError();
+        }
+
+        return { id: user.id, name: user.name, email: user.email };
       },
     }),
   ],

@@ -5,6 +5,7 @@ import OpenAI from "openai";
 import { getPersona } from "@/lib/personaProvider";
 import { getIndustry } from "@/lib/industryProvider";
 import { buildBerumenSystemPrompt, buildBerumenUserMessage } from "./prompt";
+import { requireAuth } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,9 @@ const openai = process.env.OPENAI_API_KEY
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 export async function POST(req: Request) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   if (!openai) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY not configured" },

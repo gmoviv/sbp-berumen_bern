@@ -1,8 +1,40 @@
 // src/lib/rag.ts
-import { db } from './clients'; // Use the new connection pool
-import { openai } from './clients';
+import { createHash } from 'node:crypto';
+import { db, openai, redis } from './clients';
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';
+const EMBEDDING_CACHE_TTL_SECONDS = 3600; // N14 — 1 hour
+
+async function getEmbedding(query: string): Promise<number[]> {
+    const key = `embed:${EMBEDDING_MODEL}:${createHash('sha256').update(query).digest('hex')}`;
+
+    if (redis) {
+        try {
+            const cached = await redis.get<number[]>(key);
+            if (Array.isArray(cached) && cached.length > 0) {
+                return cached;
+            }
+        } catch (err) {
+            console.warn('[rag] embedding cache read failed', err);
+        }
+    }
+
+    const response = await openai.embeddings.create({
+        model: EMBEDDING_MODEL,
+        input: query,
+    });
+    const embedding = response.data[0].embedding;
+
+    if (redis) {
+        try {
+            await redis.set(key, embedding, { ex: EMBEDDING_CACHE_TTL_SECONDS });
+        } catch (err) {
+            console.warn('[rag] embedding cache write failed', err);
+        }
+    }
+
+    return embedding;
+}
 
 export interface SearchResult {
     id: string;
@@ -25,12 +57,8 @@ export async function hybridSearch(
     const client = await db.connect(); // Check out a client from the pool
 
     try {
-        // 1. Get embedding for the query
-        const embeddingResponse = await openai.embeddings.create({
-            model: EMBEDDING_MODEL,
-            input: query,
-        });
-        const queryEmbedding = embeddingResponse.data[0].embedding;
+        // 1. Get embedding for the query (cached per query — N14)
+        const queryEmbedding = await getEmbedding(query);
 
         // 2. Perform keyword search (FTS)
         const keywordQuery = `
@@ -56,13 +84,21 @@ export async function hybridSearch(
         // 4. Combine and re-rank results (Reciprocal Rank Fusion)
         const rankedResults: Record<string, { score: number; result: SearchResult }> = {};
 
-        const processResults = (results: any[], k = 60) => {
+        // C9 — RRF must SUM contributions across rankers, not take MAX.
+        // Taking max meant a doc ranked #1 in vector + #1 in keyword scored
+        // identically to a doc ranked #1 in only one — fusion provided zero
+        // discrimination. Additive score is the canonical Reciprocal Rank
+        // Fusion definition.
+        const processResults = (results: { id: string; content: string; metadata: SearchResult["metadata"]; score: number }[], k = 60) => {
             results.forEach((row, index) => {
                 const rank = index + 1;
-                const score = 1 / (k + rank);
-                if (!rankedResults[row.id] || score > rankedResults[row.id].score) {
+                const contribution = 1 / (k + rank);
+                const existing = rankedResults[row.id];
+                if (existing) {
+                    existing.score += contribution;
+                } else {
                     rankedResults[row.id] = {
-                        score,
+                        score: contribution,
                         result: {
                             id: row.id,
                             content: row.content,

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getPersona, Bench } from "@/lib/personaProvider";
 import { getIndustry } from "@/lib/industryProvider";
 import { buildAIDiagnostic, NarrativeInputs } from "@/lib/aiNarrative";
+import { requireAuth } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -59,6 +60,9 @@ function normalizeSupportChannels(raw?: string[], main?: string) {
 }
 
 export async function POST(req: Request) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   try {
     const body = Body.parse(await req.json());
     const persona = await getPersona(body.personaType, body.idea || "scorecard context");

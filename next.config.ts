@@ -2,10 +2,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    // Don’t block the production build on TS type errors
-    ignoreBuildErrors: true,
-  },
+  // CI gates restored (C13). TypeScript and ESLint now block builds again so
+  // regressions like (req as any).ip — silently undefined in Next 15+ — get
+  // caught before they ship.
 };
 
 export default nextConfig;

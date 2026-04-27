@@ -3,6 +3,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { z } from 'zod';
 import { getPersona } from '@/lib/personaProvider';
+import { requireAuth } from '@/lib/api-auth';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +34,9 @@ ${context}
 }
 
 export async function POST(req: Request) {
+  const gate = await requireAuth();
+  if (!gate.ok) return gate.response;
+
   try {
     const { messages, personaType } = Body.parse(await req.json());
 
