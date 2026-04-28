@@ -54,6 +54,7 @@ export type ChallengeLevelOption = {
 export type PersonaOption = {
     id: string;
     name: string;
+    cluster?: string;
 };
 
 export const FIELD_LIMITS = {

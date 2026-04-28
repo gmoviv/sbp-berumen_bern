@@ -2,6 +2,8 @@
   "name": "Mauricio",
   "role": "Jefe de Investigación de Mercados",
   "city": "Nuevo León",
+  "cluster": "Medical & Health",
+  "strategic_synthesis": "Mauricio prioritizes utility and timing, believing that a research study only has value if it arrives within the decision-making window of the academic calendar. He values reliable, interpretative partnerships that simplify his work and provide clear, actionable conclusions without unnecessary sophistication.",
   "demographics": [
     "Profesional analítico con perfil tranquilo y colaborativo",
     "Poco tiempo en el rol actual (≈2 años), en etapa de consolidación",
@@ -63,5 +65,4 @@
     "Las decisiones dependen de ventanas de tiempo muy claras",
     "La investigación compite por relevancia frente a otras prioridades institucionales"
   ]
-  
 }

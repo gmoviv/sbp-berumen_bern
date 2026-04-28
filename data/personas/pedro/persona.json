@@ -2,6 +2,8 @@
   "name": "Pedro",
   "role": "Gerente de Mercadotecnia e Insights",
   "city": "Ciudad de México",
+  "cluster": "Medical & Health",
+  "strategic_synthesis": "Pedro is a technical and system-oriented leader who focuses on data quality, scalability, and long-term analytical integrity. He values honest, proactive partners who question the status quo and can translate complex analytics into sustainable business intelligence without the hype.",
   "demographics": [
     "Profesional senior con más de 15 años de experiencia en investigación de mercados, analytics y machine learning",
     "Trayectoria en consumo masivo, tabaco, agricultura y pharma",
@@ -64,5 +66,4 @@
     "Alta presión por velocidad y activación comercial",
     "Fuerte escrutinio legal y regulatorio sobre manejo de datos"
   ]
-  
 }

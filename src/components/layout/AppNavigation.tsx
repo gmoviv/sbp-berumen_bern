@@ -18,7 +18,11 @@ export default function AppNavigation() {
   const { data: session } = useSession();
   const { t } = useI18n();
   const allLinks = isAdminRole(session?.user?.roles)
-    ? [...links, { href: "/admin/users", labelKey: "nav.users" as const }]
+    ? [
+        ...links, 
+        { href: "/admin/users", labelKey: "nav.users" as const },
+        { href: "/admin/personas", labelKey: "nav.personas" as const }
+      ]
     : links;
 
   return (

@@ -17,6 +17,7 @@ export default async function HomePage() {
     const initialPersonas: PersonaOption[] = personaList.map((item) => ({
         id: item.id,
         name: item.role?.trim() ? `${item.name} — ${item.role}` : item.name,
+        cluster: item.cluster,
     }));
 
     const personaLookup: Record<string, string> = personaList.reduce((acc, p) => {
